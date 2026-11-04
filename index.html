@@ -81,7 +81,7 @@ body.in #enter{display:none}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script type="module">
 /* Trystero P2P (BitTorrent 트래커로 상대를 찾고, 이후엔 브라우저끼리 직접 연결) */
-(async function(){var u=["https://esm.run/trystero@0.21.4/torrent","https://cdn.jsdelivr.net/npm/trystero@0.21.4/dist/trystero-torrent.min.js","https://esm.sh/trystero@0.21.4/torrent","https://esm.run/trystero@0.21.4"];
+(async function(){var u=["https://esm.run/trystero","https://esm.sh/trystero","https://cdn.jsdelivr.net/npm/trystero/+esm","https://esm.run/@trystero-p2p/torrent","https://esm.sh/@trystero-p2p/torrent"];
 for(var i=0;i<u.length;i++){try{window.__TR=await import(u[i]);window.__TRU=u[i];console.log("Trystero 로드:",u[i]);break}catch(e){console.warn("Trystero 로드 실패",u[i],e)}}})();
 </script>
 <script>
@@ -300,10 +300,9 @@ function upd(id,d0){var d=rd[id]=Object.assign(rd[id]||{},d0);if(!d.n)return;var
   if(d.wd!==r.wd){r.wd=d.wd;boost=Math.min(1.6,boost+.5)}cnt()}
 function drop(id){var r=remote[id];if(r){S.remove(r.g);r.el.remove();delete remote[id]}delete rd[id];cnt()}
 function joinNet(){var TR=window.__TR;if(!TR||!TR.joinRoom){toast("멀티플레이 모듈을 불러오지 못해 혼자 둘러봐요");return}
-  try{room=TR.joinRoom({appId:"wiimocam-camp-v1"},"campfire-main");var a=room.makeAction("p");sendP=a[0];
-    a[1](function(d,id){if(d&&typeof d==="object")upd(id,d)});
-    room.onPeerJoin(function(id){var m=Object.assign({},mine);delete m.fw;delete m.say;delete m.st;if(m.n)sendP(m,id)});
-    room.onPeerLeave(drop);setTimeout(function(){if(room&&!Object.keys(remote).length)toast("아직 다른 접속자를 못 찾았어요. 같은 주소로 동시에 접속해 있어야 하고, 연결에 최대 30초 걸릴 수 있어요")},20000)}catch(e){room=null;console.error(e)}cnt()}
+  try{room=TR.joinRoom({appId:"wiimocam-camp-v1"},"campfire-main",{onJoinError:function(e){console.warn("Trystero 연결 실패(네트워크가 직접 연결을 막을 수 있음)",e);toast("일부 접속자와 직접 연결에 실패했어요 (네트워크 제한)")}});var a=room.makeAction("p"),hi=function(id){var m=Object.assign({},mine);delete m.fw;delete m.say;delete m.st;if(m.n)sendP(m,id)};
+    if(Array.isArray(a)){sendP=a[0];a[1](function(d,id){if(d&&typeof d==="object")upd(id,d)});room.onPeerJoin(hi);room.onPeerLeave(drop)}
+    else{sendP=function(d,id){return a.send(d,id?{target:id}:undefined)};a.onMessage=function(d,o){if(d&&typeof d==="object")upd(o&&o.peerId,d)};room.onPeerJoin=hi;room.onPeerLeave=drop}setTimeout(function(){if(room&&!Object.keys(remote).length)toast("아직 다른 접속자를 못 찾았어요. 같은 주소로 동시에 접속해 있어야 하고, 연결에 최대 30초 걸릴 수 있어요")},20000)}catch(e){room=null;console.error(e)}cnt()}
 
 /* 입력 */
 var keys={},stick={x:0,z:0},yaw=0,pitch=.42,dist=9,ct=new THREE.Vector3(),entered=false,up=0;
